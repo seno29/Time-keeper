@@ -7,18 +7,27 @@ import 'package:time_keeper/CustomWidgets/choose_music_dialog.dart';
 import 'package:time_keeper/CustomWidgets/round_button.dart';
 import 'package:time_keeper/CustomWidgets/task_label.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:time_keeper/DBUtility/TaskController.dart';
 import 'package:time_keeper/Models/AppStateNotifier.dart';
 import 'package:time_keeper/Models/Quotes.dart';
 import 'dart:math';
 import 'package:audioplayers/audio_cache.dart';
+import 'package:time_keeper/Models/Timer.dart';
 
 class TimerScreen extends StatefulWidget {
+  final int taskid;
   final String taskName;
   final String tagName;
+  final DateTime dateCreated;
   final bool active;
 
   TimerScreen(
-      {Key key, this.taskName = '', this.tagName = '', this.active = false})
+      {Key key,
+      this.taskid = 0,
+      this.taskName = '',
+      this.tagName = '',
+      this.dateCreated,
+      this.active = false})
       : super(key: key);
   @override
   _TimerScreenState createState() => _TimerScreenState();
@@ -26,6 +35,7 @@ class TimerScreen extends StatefulWidget {
 
 class _TimerScreenState extends State<TimerScreen> with WidgetsBindingObserver {
   int _timeSelected = 5;
+  int duration = 25;
   int min = 25;
   int sec = 0;
   String startButtonText = 'Start';
@@ -131,21 +141,20 @@ class _TimerScreenState extends State<TimerScreen> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     print(state);
-    if (state == AppLifecycleState.inactive && isDeepFocusModeOn() && timerActive) {
+    if (state == AppLifecycleState.inactive &&
+        isDeepFocusModeOn() &&
+        timerActive) {
       timer.cancel();
       quoteTimer.cancel();
+      stopMusic();
       resetTimer();
       _showtimerNotification(
           'Timer has stopped', 'You are in deep focus mode!', 0);
-    } else if (state == AppLifecycleState.resumed) {
-      setState(() {
-        stopMusic();
-        resetTimer();
-      });
     }
   }
 
   resetTimer() {
+    duration = 25;
     min = 25;
     sec = 0;
     timeout = 10;
@@ -281,6 +290,7 @@ class _TimerScreenState extends State<TimerScreen> with WidgetsBindingObserver {
                     ? TaskLabel(
                         title: widget.taskName,
                         subtitle: widget.tagName,
+                        dateCreated: widget.dateCreated,
                       )
                     : Container(),
                 Expanded(
@@ -301,6 +311,8 @@ class _TimerScreenState extends State<TimerScreen> with WidgetsBindingObserver {
                             } else {
                               min = end * 5;
                             }
+                            duration = min;
+                            min = 1;
                           });
                         }
                       },
@@ -343,11 +355,23 @@ class _TimerScreenState extends State<TimerScreen> with WidgetsBindingObserver {
                                 timeout = 10;
                                 timer.cancel();
                                 quoteTimer.cancel();
-                                min = 1;
-                                sec = 0;
                                 startButtonText = 'Start';
                                 timerActive = false;
                                 flutterLocalNotificationsPlugin.cancel(0);
+                                print('Duration: $duration');
+                                TaskController.addTimer(
+                                  TimerData(
+                                    taskid: widget.taskid,
+                                    duration: duration,
+                                    date: DateTime.now()
+                                  ),
+                                ).then((value){
+                                  if(value > 0){
+                                    TaskController.updateTaskStatus(widget.taskid, 'Completed').then((value) {
+                                      print('timer updated! task updated!');
+                                    });
+                                  }
+                                });
                                 _showtimerNotification('Hurray!',
                                     'congratulations...You did it', 1);
                                 stopMusic();

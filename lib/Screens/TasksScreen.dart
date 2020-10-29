@@ -3,8 +3,8 @@ import 'package:time_keeper/CustomWidgets/add_task_dialog.dart';
 import 'package:time_keeper/CustomWidgets/app_bar.dart';
 import 'package:time_keeper/CustomWidgets/round_button.dart';
 import 'package:time_keeper/CustomWidgets/task_card.dart';
+import 'package:time_keeper/DBUtility/TaskController.dart';
 import 'package:time_keeper/Models/Task.dart';
-import 'package:time_keeper/Screens/TimerScreen.dart';
 
 class TasksScreen extends StatefulWidget {
   @override
@@ -14,58 +14,39 @@ class TasksScreen extends StatefulWidget {
 class _TasksScreenState extends State<TasksScreen> {
   bool _completedTaskVisible = false;
   bool taskAdded = false;
-  List<TaskCard> pendingTasks = [
-    TaskCard(
-      title: 'some pending task huj hv hhgh hg h long long desc ription',
-      subtitle: 'tag',
-      status: 'Pending',
-      priority: 2,
-    ),
-    TaskCard(
-      title: 'some pending task',
-      subtitle: 'tag',
-      status: 'Pending',
-      priority: 0,
-    ),
-    TaskCard(
-      title: 'some pending task',
-      subtitle: 'tag',
-      status: 'Pending',
-      priority: 1,
-    ),
-    TaskCard(
-      title: 'some pending task',
-      subtitle: 'tag',
-      status: 'Pending',
-      priority: 2,
-    )
-  ];
-  List<TaskCard> completedTasks = [
-    TaskCard(
-      title: 'some completed task huj hv hhgh hg h long long desc ription',
-      subtitle: 'tag',
-      status: 'Completed',
-      priority: 2,
-    ),
-    TaskCard(
-      title: 'some completed task',
-      subtitle: 'tag',
-      status: 'Completed',
-      priority: 0,
-    ),
-    TaskCard(
-      title: 'some completed task',
-      subtitle: 'tag',
-      status: 'Completed',
-      priority: 1,
-    ),
-    TaskCard(
-      title: 'some completed task',
-      subtitle: 'tag',
-      status: 'Completed',
-      priority: 2,
-    )
-  ];
+  List<Task> pendingTasksList = [];
+  List<Task> completedTasksList = [];
+
+  void initState() {
+    super.initState();
+    refreshTaskList();
+    refreshCompletedTaskList();
+  }
+
+  void onDeleteTask(int id) async {
+    TaskController.deleteTask(id).then((value) {
+      if (value >= 1) {
+        refreshTaskList();
+        refreshCompletedTaskList();
+      }
+    });
+  }
+
+  void refreshTaskList() {
+    TaskController.getPendingTask().then((value) {
+      setState(() {
+        pendingTasksList = value;
+      });
+    });
+  }
+
+  void refreshCompletedTaskList() {
+    TaskController.getCompletedTask().then((value) {
+      setState(() {
+        completedTasksList = value;
+      });
+    });
+  }
 
   Future<Task> _showModelForm() async {
     return showDialog<Task>(
@@ -78,10 +59,12 @@ class _TasksScreenState extends State<TasksScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // print('called');
+    refreshCompletedTaskList();
+    refreshTaskList();
     return Container(
       width: double.infinity,
       height: double.infinity,
-      // color: Colors.grey[100],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -105,7 +88,56 @@ class _TasksScreenState extends State<TasksScreen> {
                           fontSize: 18),
                     ),
                   ),
-                  ...pendingTasks,
+                  ...List.generate(
+                      pendingTasksList.length,
+                      (index) => TaskCard(
+                            id: pendingTasksList[index].id,
+                            title: pendingTasksList[index].title,
+                            subtitle: pendingTasksList[index].tag,
+                            status: pendingTasksList[index].status,
+                            priority: pendingTasksList[index].priority,
+                            dateCreated: pendingTasksList[index].dateCreated,
+                            onDelete: (id) {
+                              onDeleteTask(id);
+                            },
+                            onEdit: (id) {
+                              showDialog<Task>(
+                                  context: context,
+                                  barrierDismissible:
+                                      false, // user must tap button!
+                                  builder: (_) {
+                                    return AddTaskDialog(
+                                      title: pendingTasksList[index].title,
+                                      tag: pendingTasksList[index].tag,
+                                      priority:
+                                          pendingTasksList[index].priority,
+                                      editMode: true,
+                                    );
+                                  }).then((task) {
+                                if (task != null) {
+                                  TaskController.editTask(
+                                          pendingTasksList[index].id, task)
+                                      .then((value) {
+                                    print('edited: $value');
+                                    if (value >= 1) {
+                                      refreshTaskList();
+                                      Scaffold.of(context)
+                                          .showSnackBar(SnackBar(
+                                        content: Text('Task Edited!'),
+                                        duration: Duration(milliseconds: 1000),
+                                      ));
+                                    } else {
+                                      Scaffold.of(context)
+                                          .showSnackBar(SnackBar(
+                                        content: Text('Error in editing task!'),
+                                        duration: Duration(milliseconds: 1000),
+                                      ));
+                                    }
+                                  });
+                                }
+                              });
+                            },
+                          )),
                   Padding(
                     padding: const EdgeInsets.all(10.0),
                     child: GestureDetector(
@@ -147,7 +179,22 @@ class _TasksScreenState extends State<TasksScreen> {
                   Visibility(
                     visible: _completedTaskVisible,
                     child: Column(
-                      children: [...completedTasks],
+                      children: [
+                        ...List.generate(
+                          completedTasksList.length,
+                          (index) => TaskCard(
+                            id: completedTasksList[index].id,
+                            title: completedTasksList[index].title,
+                            subtitle: completedTasksList[index].tag,
+                            status: completedTasksList[index].status,
+                            priority: completedTasksList[index].priority,
+                            dateCreated: completedTasksList[index].dateCreated,
+                            onDelete: (id) {
+                              onDeleteTask(id);
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -157,19 +204,23 @@ class _TasksScreenState extends State<TasksScreen> {
           RoundButton(
             text: '+ Task',
             onPressed: () {
-              _showModelForm().then((value) {
-                if (value != null) {
-                  setState(() {
-                    pendingTasks.add(TaskCard(
-                      title: value.title,
-                      subtitle: value.tag,
-                      status: 'Pending',
-                      priority: value.priority,
-                    ));
+              _showModelForm().then((task) {
+                if (task != null) {
+                  TaskController.insertTask(task).then((value) {
+                    print('inserted task in pending: $value');
+                    if (value >= 1) {
+                      refreshTaskList();
+                      Scaffold.of(context).showSnackBar(SnackBar(
+                        content: Text('Task Added!'),
+                        duration: Duration(milliseconds: 1000),
+                      ));
+                    } else {
+                      Scaffold.of(context).showSnackBar(SnackBar(
+                        content: Text('Error in adding task!'),
+                        duration: Duration(milliseconds: 1000),
+                      ));
+                    }
                   });
-                  Scaffold.of(context).showSnackBar(SnackBar(
-                    content: Text('Task Added!'),
-                  ));
                 }
               });
             },

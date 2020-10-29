@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 class TaskLabel extends StatefulWidget {
   final String title;
   final String subtitle;
+  final DateTime dateCreated;
 
-  TaskLabel({Key key, this.title, this.subtitle}) : super(key: key);
+  TaskLabel({Key key, this.title, this.subtitle, this.dateCreated}) : super(key: key);
   @override
   _TaskLabelState createState() => _TaskLabelState();
 }
@@ -38,7 +39,7 @@ class _TaskLabelState extends State<TaskLabel> {
                 ),
                 SizedBox(width: 5),
                 Text(
-                  'yesterday',
+                  '${widget.dateCreated.day}/${widget.dateCreated.month}/${widget.dateCreated.year}',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey,

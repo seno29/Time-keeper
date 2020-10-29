@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:time_keeper/CustomWidgets/app_bar.dart';
+import 'package:time_keeper/DBUtility/TaskController.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   @override
@@ -7,13 +8,46 @@ class AnalyticsScreen extends StatefulWidget {
 }
 
 class _AnalyticsScreenState extends State<AnalyticsScreen> {
+  int totalDuration = 0;
+  int totalPendingTasks = 0;
+  int totalCompletedTasks = 0;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    TaskController.getTotalFocusTime().then((value) {
+      if (value != null) {
+        setState(() {
+          totalDuration = value;
+        });
+      }
+    });
+    TaskController.getTotalPendingTask().then((value) {
+      if (value != null) {
+        setState(() {
+          totalPendingTasks = value;
+        });
+      }
+    });
+    TaskController.getTotalCompletedTask().then((value) {
+      if (value != null) {
+        setState(() {
+          totalCompletedTasks = value;
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
       // color: Colors.grey[100],
       child: Column(
         children: [
-          AppBarCustom(title: 'Analytics',leading: Icon(Icons.insert_chart),),
+          AppBarCustom(
+            title: 'Analytics',
+            leading: Icon(Icons.insert_chart),
+          ),
           Expanded(
             flex: 2,
             child: Container(
@@ -37,14 +71,15 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                               'Total Focus Time',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: Colors.deepPurple,
-                                  fontSize: 14, fontWeight: FontWeight.bold),
+                                  color: Colors.deepPurple,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold),
                             ),
                           ),
                         ),
                         Expanded(
                           child: Text(
-                            '15.0 h',
+                            '${(totalDuration / 60).toStringAsFixed(1)} h',
                             style: TextStyle(
                               color: Colors.deepPurple,
                               fontSize: 28,
@@ -81,7 +116,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                         ),
                         Expanded(
                           child: Text(
-                            '12',
+                            '$totalCompletedTasks',
                             style: TextStyle(
                               color: Colors.green,
                               fontSize: 28,
@@ -118,7 +153,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                         ),
                         Expanded(
                           child: Text(
-                            '18',
+                            '$totalPendingTasks',
                             style: TextStyle(
                               color: Colors.blue,
                               fontSize: 28,

@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:time_keeper/Screens/TimerScreen.dart';
 
 class TaskCard extends StatefulWidget {
+  final int id;
   final String title;
   final String subtitle;
   final String status;
   final int priority;
-
-  TaskCard({Key key, this.title, this.subtitle, this.status, this.priority})
+  final DateTime dateCreated;
+  final void Function(int) onDelete;
+  final void Function(int) onEdit;
+  TaskCard({Key key, this.id, this.title, this.subtitle, this.status, this.priority,this.dateCreated, this.onDelete, this.onEdit})
       : super(key: key);
   @override
   _TaskCardState createState() => _TaskCardState();
@@ -45,8 +48,10 @@ class _TaskCardState extends State<TaskCard> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => TimerScreen(
+                            taskid: widget.id,
                             taskName: widget.title,
                             tagName: widget.subtitle,
+                            dateCreated: widget.dateCreated,
                             active: true,
                           ),
                         ),
@@ -76,7 +81,7 @@ class _TaskCardState extends State<TaskCard> {
                     ),
                     SizedBox(width: 5),
                     Text(
-                      'yesterday',
+                      '${widget.dateCreated.day}/${widget.dateCreated.month}/${widget.dateCreated.year}',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey,
@@ -102,11 +107,10 @@ class _TaskCardState extends State<TaskCard> {
                             child: IconButton(
                               icon: Icon(
                                 Icons.edit,
-                                // color: Colors.grey,
                                 size: 20,
                               ),
                               onPressed: () {
-                                print('task edit');
+                                widget.onEdit(widget.id);
                               },
                             ),
                           )
@@ -123,8 +127,8 @@ class _TaskCardState extends State<TaskCard> {
                           // color: Colors.grey,
                           size: 20,
                         ),
-                        onPressed: () {
-                          print('task deleted');
+                        onPressed: (){
+                          widget.onDelete(widget.id);
                         },
                       ),
                     ),

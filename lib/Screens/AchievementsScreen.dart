@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:time_keeper/CustomWidgets/app_bar.dart';
+import 'package:time_keeper/DBUtility/TaskController.dart';
+import 'package:time_keeper/Models/Badge.dart';
 import 'package:time_keeper/app_icons.dart';
 
 class AchievementScreen extends StatefulWidget {
@@ -8,6 +10,19 @@ class AchievementScreen extends StatefulWidget {
 }
 
 class _AchievementScreenState extends State<AchievementScreen> {
+  List<Badge> badges = [];
+
+  void initState() {
+    super.initState();
+    TaskController.getBadges().then((value) {
+      if (value != null) {
+        setState(() {
+          badges = value;
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -32,64 +47,19 @@ class _AchievementScreenState extends State<AchievementScreen> {
           flex: 9,
           child: Container(
             child: ListView(children: [
-              Container(
-                margin: EdgeInsets.all(10.0),
-                padding: EdgeInsets.all(10.0),
-                height: 100,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(5.0),
-                ),
-                child: Text(
-                  'item 1',
-                ),
-              ),
-              Container(
-                margin: EdgeInsets.all(10.0),
-                padding: EdgeInsets.all(10.0),
-                height: 100,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(5.0),
-                ),
-                child: Text(
-                  'item 1',
-                ),
-              ),
-              Container(
-                margin: EdgeInsets.all(10.0),
-                padding: EdgeInsets.all(10.0),
-                height: 100,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(5.0),
-                ),
-                child: Text(
-                  'item 1',
-                ),
-              ),
-              Container(
-                margin: EdgeInsets.all(10.0),
-                padding: EdgeInsets.all(10.0),
-                height: 100,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(5.0),
-                ),
-                child: Text(
-                  'item 1',
-                ),
-              ),
-              Container(
-                margin: EdgeInsets.all(10.0),
-                padding: EdgeInsets.all(10.0),
-                height: 100,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(5.0),
-                ),
-                child: Text(
-                  'item 1',
+              ...List.generate(
+                badges.length,
+                (index) => Container(
+                  margin: EdgeInsets.all(10.0),
+                  padding: EdgeInsets.all(10.0),
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(5.0),
+                  ),
+                  child: Text(
+                    badges[index].desc,
+                  ),
                 ),
               ),
               SizedBox(height: 80)

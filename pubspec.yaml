@@ -32,6 +32,8 @@ dependencies:
   flutter_local_notifications: ^1.4.4+4
   audioplayers: ^0.16.1
   provider: ^4.3.2+2
+  sqflite:
+  path: ^1.7.0
 
 dev_dependencies:
   flutter_test:

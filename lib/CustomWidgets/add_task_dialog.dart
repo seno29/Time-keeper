@@ -1,29 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:time_keeper/CustomWidgets/round_button.dart';
+import 'package:time_keeper/DBUtility/TaskController.dart';
+import 'package:time_keeper/Models/Tag.dart';
 import 'package:time_keeper/Models/Task.dart';
 
 class AddTaskDialog extends StatefulWidget {
-  final List<String> tagList;
-  AddTaskDialog({Key key, this.tagList}) : super(key: key);
+  final String title;
+  final String tag;
+  final int priority;
+  final bool editMode;
+  AddTaskDialog(
+      {Key key,
+      this.title = '',
+      this.tag = 'Work',
+      this.priority = 2,
+      this.editMode = false})
+      : super(key: key);
   @override
   _AddTaskDialogState createState() => _AddTaskDialogState();
 }
 
 class _AddTaskDialogState extends State<AddTaskDialog> {
-  String priorityValue = 'High';
-  String tagValue = 'Work';
-  bool taskAdded = false;
+  String priorityValue;
+  String tagValue;
 
-  List<String> tagList = [
-    'Work',
-    'Study',
-    'Sports',
-    'Assignment',
-    'Mediatation'
-  ];
+  List<Tag> tagList = [];
 
   TextEditingController tagController = TextEditingController();
   TextEditingController taskTitleController = TextEditingController();
+  void initState() {
+    super.initState();
+    setState(() {
+      taskTitleController.text = widget.title;
+      tagValue = widget.tag;
+      if (widget.priority == 2) {
+        priorityValue = 'High';
+      } else if (widget.priority == 1) {
+        priorityValue = 'Medium';
+      } else {
+        priorityValue = 'Low';
+      }
+    });
+    refreshTagList();
+  }
+
+  void refreshTagList() {
+    TaskController.getTags().then((tags) {
+      setState(() {
+        tagList = tags;
+      });
+    });
+  }
 
   @override
   void dispose() {
@@ -32,8 +59,8 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     super.dispose();
   }
 
-  Future<void> _showAddTagDialog() async {
-    return showDialog<void>(
+  Future<int> _showAddTagDialog() async {
+    return showDialog<int>(
       context: context,
       builder: (BuildContext context) {
         return Dialog(
@@ -55,10 +82,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                   child: TextField(
                     controller: tagController,
                     cursorColor: Theme.of(context).primaryColor,
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.black
-                    ),
+                    style: TextStyle(fontSize: 18, color: Colors.black),
                     decoration: InputDecoration(
                         focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(
@@ -79,10 +103,10 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                     RoundButton(
                       text: 'Add',
                       onPressed: () {
-                        setState(() {
-                          tagList.add(tagController.text);
+                        TaskController.insertTag(Tag(name: tagController.text)).then((value) {
+                          // print('inserted tag: $value');
+                          Navigator.of(context).pop(value);
                         });
-                        Navigator.of(context).pop();
                       },
                     ),
                   ],
@@ -98,12 +122,12 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-          backgroundColor: Colors.transparent,
-          body: AlertDialog(
+      backgroundColor: Colors.transparent,
+      body: AlertDialog(
         content: StatefulBuilder(
             builder: (BuildContext context, StateSetter setState) {
           return Container(
-            height: 300,
+            height: 500,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -115,17 +139,15 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                 ),
                 Text(
                   'Task title: ',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.black),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: TextField(
                     controller: taskTitleController,
                     cursorColor: Theme.of(context).primaryColor,
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.black
-                    ),
+                    style: TextStyle(fontSize: 18, color: Colors.black),
                     decoration: InputDecoration(
                         focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(
@@ -142,7 +164,8 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                 ),
                 Text(
                   'Select tag: ',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.black),
                 ),
                 DropdownButton<String>(
                   value: tagValue,
@@ -159,10 +182,10 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                       tagValue = newValue;
                     });
                   },
-                  items: tagList.map<DropdownMenuItem<String>>((String value) {
+                  items: tagList.map<DropdownMenuItem<String>>((Tag tag) {
                     return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
+                      value: tag.name,
+                      child: Text(tag.name),
                     );
                   }).toList(),
                 ),
@@ -172,7 +195,11 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                     InkWell(
                       onTap: () {
                         print('add tag');
-                        _showAddTagDialog();
+                        _showAddTagDialog().then((value) {
+                          if(value > 0){
+                            refreshTagList();
+                          }
+                        });
                       },
                       child: Text(
                         '+ custom tag',
@@ -187,7 +214,8 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                 ),
                 Text(
                   'Select priority: ',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.black),
                 ),
                 DropdownButton<String>(
                   value: priorityValue,
@@ -216,7 +244,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     RoundButton(
-                      text: 'Add',
+                      text: widget.editMode ? 'Save' : 'Add',
                       onPressed: () {
                         if (taskTitleController.text != '') {
                           int priority = 0;
@@ -233,6 +261,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                               tag: tagValue,
                               status: 'Pending',
                               priority: priority,
+                              dateCreated: DateTime.now()
                             ),
                           );
                         } else {
