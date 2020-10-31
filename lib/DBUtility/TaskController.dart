@@ -1,7 +1,7 @@
-import 'package:flutter/cupertino.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:time_keeper/DBUtility/DBConnection.dart';
-import 'package:time_keeper/Models/Badge.dart';
+import 'package:time_keeper/Models/DoughnutChartData.dart';
+import 'package:time_keeper/Models/BarChartData.dart';
 import 'package:time_keeper/Models/Tag.dart';
 import 'package:time_keeper/Models/Task.dart';
 import 'package:time_keeper/Models/Timer.dart';
@@ -31,6 +31,7 @@ class TaskController {
     Database db = await DBConnection.openDatabaseConnection();
     List<Map<String, dynamic>> tasks =
         await db.query('tasks', where: "status = 'Completed'");
+    // print(tasks[0]['date']);
     return List.generate(
         tasks.length,
         (i) => Task(
@@ -82,16 +83,6 @@ class TaskController {
   static Future<int> addTimer(TimerData timer) async {
     Database db = await DBConnection.openDatabaseConnection();
     int res = await db.insert('timer', timer.toMap());
-    // getTotalFocusTime().then((value) {
-    //   print(value);
-    //   if (value >= 200) {
-    //     db.insert('badges', {'desc': '200 minutes of Focus'});
-    //   } else if (value >= 500) {
-    //     db.insert('badges', {'desc': '500 minutes of Focus'});
-    //   } else if (value >= 600) {
-    //     db.insert('badges', {'desc': '10 hours of Focus'});
-    //   }
-    // });
     return res;
   }
 
@@ -122,9 +113,47 @@ class TaskController {
     return result[0]['total'];
   }
 
-  static Future<List<Badge>> getBadges() async {
+  static Future<int> getTotalTodaysPendingTask() async {
     Database db = await DBConnection.openDatabaseConnection();
-    List<Map<String, dynamic>> result = await db.query('badges');
-    return List.generate(result.length, (i) => Badge(desc: result[i]['desc']));
+    DateTime currentDate = DateTime.now();
+    List<Map<String, dynamic>> result = await db
+        .rawQuery("SELECT count(*) as total from tasks WHERE status='Pending' AND date LIKE '${currentDate.year}-${currentDate.month}-${currentDate.day}%'");
+    return result[0]['total'];
+  }
+
+  static Future<int> getTotalTodaysCompletedTask() async {
+    Database db = await DBConnection.openDatabaseConnection();
+    DateTime currentDate = DateTime.now();
+    List<Map<String, dynamic>> result = await db.rawQuery(
+        "SELECT count(*) as total from tasks WHERE status='Completed' AND date LIKE '${currentDate.year}-${currentDate.month}-${currentDate.day}%'");
+    return result[0]['total'];
+  }
+
+  static Future<List<DoughnutChartData>> getChartData() async {
+    Database db = await DBConnection.openDatabaseConnection();
+    DateTime currentDate = DateTime.now();  
+    List<Map<String, dynamic>> result = await db.rawQuery(
+        "SELECT tag,sum(duration) as duration from Timer INNER JOIN Tasks ON Timer.taskid=Tasks.id WHERE Timer.date LIKE '${currentDate.year}-${currentDate.month}-${currentDate.day}%' GROUP BY Tasks.tag");
+    return List.generate(
+      result.length,
+      (i) => DoughnutChartData(
+        tag: result[i]['tag'],
+        duration: result[i]['duration'],
+      ),
+    );
+  }
+
+  static Future<List<BarChartData>> getBarChartData() async {
+    Database db = await DBConnection.openDatabaseConnection();
+    DateTime currentDate = DateTime.now();
+    List<Map<String, dynamic>> result = await db.rawQuery(
+        "SELECT date,sum(duration) as duration from TIMER WHERE date LIKE '${currentDate.year}-${currentDate.month}-%' GROUP BY date");
+    return List.generate(result.length, (i) {
+      DateTime dateFromString = DateTime.parse(result[i]['date']);
+      return BarChartData(
+        date: dateFromString.day,
+        duration: result[i]['duration'],
+      );
+    });
   }
 }

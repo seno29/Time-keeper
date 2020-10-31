@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:time_keeper/CustomWidgets/app_bar.dart';
-import 'package:time_keeper/DBUtility/TaskController.dart';
+import 'package:time_keeper/CustomWidgets/badge_card.dart';
+import 'package:time_keeper/DBUtility/BadgeController.dart';
 import 'package:time_keeper/Models/Badge.dart';
 import 'package:time_keeper/app_icons.dart';
 
@@ -14,12 +15,12 @@ class _AchievementScreenState extends State<AchievementScreen> {
 
   void initState() {
     super.initState();
-    TaskController.getBadges().then((value) {
-      if (value != null) {
-        setState(() {
+    BadgeController.getBadges().then((value) {
+      setState(() {
+        if (value != null) {
           badges = value;
-        });
-      }
+        }
+      });
     });
   }
 
@@ -38,7 +39,7 @@ class _AchievementScreenState extends State<AchievementScreen> {
         Padding(
           padding: const EdgeInsets.only(left: 10.0, top: 20),
           child: Text(
-            'All Badges',
+            'Your Badges',
             style: TextStyle(
                 color: Colors.grey, fontSize: 20, fontWeight: FontWeight.bold),
           ),
@@ -46,24 +47,19 @@ class _AchievementScreenState extends State<AchievementScreen> {
         Expanded(
           flex: 9,
           child: Container(
-            child: ListView(children: [
-              ...List.generate(
-                badges.length,
-                (index) => Container(
-                  margin: EdgeInsets.all(10.0),
-                  padding: EdgeInsets.all(10.0),
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(5.0),
-                  ),
-                  child: Text(
-                    badges[index].desc,
+            child: ListView(
+              children: [
+                ...List.generate(
+                  badges.length,
+                  (index) => BadgeCard(
+                    desc: badges[index].desc,
+                    imagePath: badges[index].imagePath,
+                    lock: badges[index].lock
                   ),
                 ),
-              ),
-              SizedBox(height: 80)
-            ]),
+                SizedBox(height: 80),
+              ],
+            ),
           ),
         ),
       ]),

@@ -261,7 +261,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                               tag: tagValue,
                               status: 'Pending',
                               priority: priority,
-                              dateCreated: DateTime.now()
+                              dateCreated: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)
                             ),
                           );
                         } else {

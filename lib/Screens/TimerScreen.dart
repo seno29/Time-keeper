@@ -92,6 +92,10 @@ class _TimerScreenState extends State<TimerScreen> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+    if(timer!=null && quoteTimer!=null){
+      timer.cancel();
+      quoteTimer.cancel();
+    }
   }
 
   Future onSelectNotification(String payload) async {
@@ -152,7 +156,7 @@ class _TimerScreenState extends State<TimerScreen> with WidgetsBindingObserver {
           'Timer has stopped', 'You are in deep focus mode!', 0);
     }
   }
-
+  
   resetTimer() {
     duration = 25;
     min = 25;
@@ -363,7 +367,7 @@ class _TimerScreenState extends State<TimerScreen> with WidgetsBindingObserver {
                                   TimerData(
                                     taskid: widget.taskid,
                                     duration: duration,
-                                    date: DateTime.now()
+                                    date: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)
                                   ),
                                 ).then((value){
                                   if(value > 0){

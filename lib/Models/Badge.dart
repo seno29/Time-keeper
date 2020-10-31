@@ -1,5 +1,10 @@
 class Badge{
-  int id;
   String desc;
-  Badge({this.id, this.desc});
+  bool lock;
+  String imagePath;
+  Badge({this.desc,  this.imagePath, this.lock=true});
+
+  void unLockBadge(){
+    this.lock = false;
+  }
 }

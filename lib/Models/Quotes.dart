@@ -11,7 +11,7 @@ const Quotes = [
   'Stay focused',
   'Avoid Distraction',
   'Put down your phone',
-  'Get your things donw and earn rewards',
+  'Get your things done and earn rewards',
   'You are almost there!',
   'Keep going',
   'Keep up the good work',
