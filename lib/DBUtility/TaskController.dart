@@ -14,23 +14,8 @@ class TaskController {
 
   static Future<List<Task>> getPendingTask() async {
     Database db = await DBConnection.openDatabaseConnection();
-    List<Map<String, dynamic>> tasks =
-        await db.query('tasks', where: "status = 'Pending'");
-    return List.generate(
-        tasks.length,
-        (i) => Task(
-            id: tasks[i]['id'],
-            title: tasks[i]['title'],
-            tag: tasks[i]['tag'],
-            status: tasks[i]['status'],
-            priority: tasks[i]['priority'],
-            dateCreated: DateTime.parse(tasks[i]['date'])));
-  }
-
-  static Future<List<Task>> getCompletedTask() async {
-    Database db = await DBConnection.openDatabaseConnection();
-    List<Map<String, dynamic>> tasks =
-        await db.query('tasks', where: "status = 'Completed'");
+    List<Map<String, dynamic>> tasks = await db.rawQuery(
+        "SELECT * FROM tasks WHERE status = 'Pending' ORDER BY date DESC");
     // print(tasks[0]['date']);
     return List.generate(
         tasks.length,
@@ -43,6 +28,42 @@ class TaskController {
             dateCreated: DateTime.parse(tasks[i]['date'])));
   }
 
+  static Future<List<Task>> sortPendingTaskByPriority() async {
+    Database db = await DBConnection.openDatabaseConnection();
+    List<Map<String, dynamic>> tasks = await db.rawQuery(
+        "SELECT * FROM tasks WHERE status = 'Pending' ORDER BY priority DESC");
+    // print(tasks[0]['date']);
+    return List.generate(
+      tasks.length,
+      (i) => Task(
+        id: tasks[i]['id'],
+        title: tasks[i]['title'],
+        tag: tasks[i]['tag'],
+        status: tasks[i]['status'],
+        priority: tasks[i]['priority'],
+        dateCreated: DateTime.parse(tasks[i]['date']),
+      ),
+    );
+  }
+
+  static Future<List<Task>> getCompletedTask() async {
+    Database db = await DBConnection.openDatabaseConnection();
+    List<Map<String, dynamic>> tasks = await db.rawQuery(
+        "SELECT * FROM tasks WHERE status = 'Completed' ORDER BY date DESC");
+    // print(tasks[0]['date']);
+    return List.generate(
+      tasks.length,
+      (i) => Task(
+        id: tasks[i]['id'],
+        title: tasks[i]['title'],
+        tag: tasks[i]['tag'],
+        status: tasks[i]['status'],
+        priority: tasks[i]['priority'],
+        dateCreated: DateTime.parse(tasks[i]['date']),
+      ),
+    );
+  }
+
   static Future<int> deleteTask(int id) async {
     Database db = await DBConnection.openDatabaseConnection();
     return db.delete('tasks', where: 'id = ?', whereArgs: [id]);
@@ -51,6 +72,12 @@ class TaskController {
   static Future<int> editTask(int id, Task task) async {
     Database db = await DBConnection.openDatabaseConnection();
     return db.update('tasks', task.toMap(), where: 'id=?', whereArgs: [id]);
+  }
+
+  static Future<int> getTaskCompletionDuration(int taskid) async{
+    Database db = await DBConnection.openDatabaseConnection();
+    List<Map<String, dynamic>> result = await db.rawQuery("SELECT sum(duration) as duration from Timer where taskid=$taskid");
+    return result[0]['duration'];
   }
 
   static void initTag() async {
@@ -88,7 +115,11 @@ class TaskController {
 
   static Future<int> updateTaskStatus(int id, String status) async {
     Database db = await DBConnection.openDatabaseConnection();
-    return db.update('tasks', {'status': '$status'},
+    DateTime currentDate = DateTime.now();
+    String date = DateTime(currentDate.year, currentDate.month, currentDate.day)
+        .toIso8601String();
+
+    return db.update('tasks', {'status': '$status', 'date': date},
         where: 'id=?', whereArgs: [id]);
   }
 
@@ -96,6 +127,14 @@ class TaskController {
     Database db = await DBConnection.openDatabaseConnection();
     List<Map<String, dynamic>> result =
         await db.rawQuery('SELECT sum(duration) as totalDuration from timer');
+    return result[0]['totalDuration'];
+  }
+
+  static Future<int> getTodaysTotalFocusTime() async {
+    Database db = await DBConnection.openDatabaseConnection();
+    DateTime currentDate = DateTime.now();
+    List<Map<String, dynamic>> result = await db.rawQuery(
+        "SELECT sum(duration) as totalDuration from timer Where date LIKE '${currentDate.year}-${currentDate.month}-${currentDate.day < 10 ? '0' + currentDate.day.toString() : currentDate.day}%'");
     return result[0]['totalDuration'];
   }
 
@@ -113,27 +152,19 @@ class TaskController {
     return result[0]['total'];
   }
 
-  static Future<int> getTotalTodaysPendingTask() async {
-    Database db = await DBConnection.openDatabaseConnection();
-    DateTime currentDate = DateTime.now();
-    List<Map<String, dynamic>> result = await db
-        .rawQuery("SELECT count(*) as total from tasks WHERE status='Pending' AND date LIKE '${currentDate.year}-${currentDate.month}-${currentDate.day}%'");
-    return result[0]['total'];
-  }
-
   static Future<int> getTotalTodaysCompletedTask() async {
     Database db = await DBConnection.openDatabaseConnection();
     DateTime currentDate = DateTime.now();
     List<Map<String, dynamic>> result = await db.rawQuery(
-        "SELECT count(*) as total from tasks WHERE status='Completed' AND date LIKE '${currentDate.year}-${currentDate.month}-${currentDate.day}%'");
+        "SELECT count(*) as total from tasks WHERE status='Completed' AND date LIKE '${currentDate.year}-${currentDate.month}-${currentDate.day < 10 ? '0' + currentDate.day.toString() : currentDate.day}%'");
     return result[0]['total'];
   }
 
   static Future<List<DoughnutChartData>> getChartData() async {
     Database db = await DBConnection.openDatabaseConnection();
-    DateTime currentDate = DateTime.now();  
+    DateTime currentDate = DateTime.now();
     List<Map<String, dynamic>> result = await db.rawQuery(
-        "SELECT tag,sum(duration) as duration from Timer INNER JOIN Tasks ON Timer.taskid=Tasks.id WHERE Timer.date LIKE '${currentDate.year}-${currentDate.month}-${currentDate.day}%' GROUP BY Tasks.tag");
+        "SELECT tag,sum(duration) as duration from Timer INNER JOIN Tasks ON Timer.taskid=Tasks.id WHERE Timer.date LIKE '${currentDate.year}-${currentDate.month}-${currentDate.day < 10 ? '0' + currentDate.day.toString() : currentDate.day}%' GROUP BY Tasks.tag");
     return List.generate(
       result.length,
       (i) => DoughnutChartData(

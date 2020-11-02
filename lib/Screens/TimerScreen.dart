@@ -92,7 +92,7 @@ class _TimerScreenState extends State<TimerScreen> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
-    if(timer!=null && quoteTimer!=null){
+    if (timer != null && quoteTimer != null) {
       timer.cancel();
       quoteTimer.cancel();
     }
@@ -156,7 +156,7 @@ class _TimerScreenState extends State<TimerScreen> with WidgetsBindingObserver {
           'Timer has stopped', 'You are in deep focus mode!', 0);
     }
   }
-  
+
   resetTimer() {
     duration = 25;
     min = 25;
@@ -233,7 +233,10 @@ class _TimerScreenState extends State<TimerScreen> with WidgetsBindingObserver {
                     ? Expanded(
                         child: IconButton(
                           padding: EdgeInsets.all(12),
-                          icon: Icon(Icons.queue_music),
+                          icon: Icon(
+                            Icons.queue_music,
+                            color: Colors.black,
+                          ),
                           onPressed: () {
                             if (timerActive) {
                               setState(() {
@@ -365,13 +368,17 @@ class _TimerScreenState extends State<TimerScreen> with WidgetsBindingObserver {
                                 print('Duration: $duration');
                                 TaskController.addTimer(
                                   TimerData(
-                                    taskid: widget.taskid,
-                                    duration: duration,
-                                    date: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)
-                                  ),
-                                ).then((value){
-                                  if(value > 0){
-                                    TaskController.updateTaskStatus(widget.taskid, 'Completed').then((value) {
+                                      taskid: widget.taskid,
+                                      duration: duration,
+                                      date: DateTime(
+                                          DateTime.now().year,
+                                          DateTime.now().month,
+                                          DateTime.now().day)),
+                                ).then((value) {
+                                  if (value > 0) {
+                                    TaskController.updateTaskStatus(
+                                            widget.taskid, 'Completed')
+                                        .then((value) {
                                       print('timer updated! task updated!');
                                     });
                                   }
@@ -413,7 +420,17 @@ class _TimerScreenState extends State<TimerScreen> with WidgetsBindingObserver {
                     ),
                   ),
                 ),
-                SizedBox(height: 80)
+                SizedBox(height: 70),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    'actual duration: $duration',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20),
+                  ),
+                ),
               ],
             ),
           ),

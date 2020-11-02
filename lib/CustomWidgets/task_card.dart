@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:time_keeper/DBUtility/TaskController.dart';
 import 'package:time_keeper/Screens/TimerScreen.dart';
 
 class TaskCard extends StatefulWidget {
@@ -10,13 +11,35 @@ class TaskCard extends StatefulWidget {
   final DateTime dateCreated;
   final void Function(int) onDelete;
   final void Function(int) onEdit;
-  TaskCard({Key key, this.id, this.title, this.subtitle, this.status, this.priority,this.dateCreated, this.onDelete, this.onEdit})
+  TaskCard(
+      {Key key,
+      this.id,
+      this.title,
+      this.subtitle,
+      this.status,
+      this.priority,
+      this.dateCreated,
+      this.onDelete,
+      this.onEdit})
       : super(key: key);
   @override
   _TaskCardState createState() => _TaskCardState();
 }
 
 class _TaskCardState extends State<TaskCard> {
+  int completionTime = 0;
+
+  void initState() {
+    super.initState();
+    if (widget.status == 'Completed') {
+      TaskController.getTaskCompletionDuration(widget.id).then((value) {
+        setState(() {
+          completionTime = value;
+        });
+      });
+    }
+  }
+
   Color getIconColor() {
     if (widget.priority == 2) {
       return Colors.red;
@@ -36,7 +59,7 @@ class _TaskCardState extends State<TaskCard> {
         borderRadius: BorderRadius.circular(10.0),
       ),
       child: Container(
-        padding: EdgeInsets.only(bottom: 10.0, top: 5, right: 5.0),
+        padding: EdgeInsets.only(bottom: 8, top: 10, right: 5.0),
         child: Row(
           children: [
             widget.status == 'Pending'
@@ -59,12 +82,12 @@ class _TaskCardState extends State<TaskCard> {
                     },
                   )
                 : Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Icon(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Icon(
                       Icons.check_circle,
-                      color: Colors.green[300],
+                      color: Colors.lightGreen,
                     ),
-                ),
+                  ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -92,7 +115,7 @@ class _TaskCardState extends State<TaskCard> {
                 Row(
                   children: [
                     Container(
-                      width: 170,
+                      width: widget.status == 'Pending' ? 170 : 150,
                       child: Text(
                         '#${widget.subtitle}',
                         style: TextStyle(
@@ -107,6 +130,7 @@ class _TaskCardState extends State<TaskCard> {
                             child: IconButton(
                               icon: Icon(
                                 Icons.edit,
+                                color: Colors.lightBlue[300],
                                 size: 20,
                               ),
                               onPressed: () {
@@ -114,7 +138,23 @@ class _TaskCardState extends State<TaskCard> {
                               },
                             ),
                           )
-                        : Container(child: Text('25')),
+                        : Container(
+                            child: Row(children: [
+                              Padding(
+                                padding: const EdgeInsets.only(top:5.0, right: 5.0),
+                                child: Icon(
+                                  Icons.timer,
+                                  size: 15,
+                                  color: Colors.lightGreen,
+                                ),
+                              ),
+                              
+                              Padding(
+                                padding: const EdgeInsets.only(top: 5.0),
+                                child: Text('$completionTime', style: TextStyle(color: Colors.lightGreen),),
+                              )
+                            ]),
+                          ),
                     SizedBox(
                       width: 10,
                     ),
@@ -124,10 +164,10 @@ class _TaskCardState extends State<TaskCard> {
                       child: IconButton(
                         icon: Icon(
                           Icons.delete,
-                          // color: Colors.grey,
+                          color: Colors.red[300],
                           size: 20,
                         ),
-                        onPressed: (){
+                        onPressed: () {
                           widget.onDelete(widget.id);
                         },
                       ),

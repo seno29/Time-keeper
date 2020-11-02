@@ -13,7 +13,7 @@ class DBConnection {
             'CREATE TABLE tasks(id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, tag TEXT, status TEXT, priority INTEGER, date TEXT)');
         db.execute('CREATE TABLE tags(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)');
         db.execute('CREATE TABLE timer(id INTEGER PRIMARY KEY AUTOINCREMENT, taskid INTEGER, duration INTEGER, date TEXT)');
-        // db.execute('CREATE TABLE badges(id INTEGER PRIMARY KEY AUTOINCREMENT, desc TEXT)');
+        
       },
       version: 1,
     );

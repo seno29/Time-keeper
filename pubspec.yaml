@@ -35,6 +35,7 @@ dependencies:
   sqflite:
   path: ^1.7.0
   syncfusion_flutter_charts: ^18.3.44
+  flutter_email_sender: ^3.0.1
 
 dev_dependencies:
   flutter_test:

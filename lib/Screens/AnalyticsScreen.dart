@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:time_keeper/CustomWidgets/app_bar.dart';
 import 'package:time_keeper/DBUtility/TaskController.dart';
@@ -14,10 +16,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   int totalDuration = 0;
   int totalPendingTasks = 0;
   int totalCompletedTasks = 0;
-  int todaysTotalPendingTasks = 0;
   int todaysTotalCompletedTasks = 0;
+  int todaysTotalFocusTime = 0;
   List<DoughnutChartData> chartData = [];
   List<BarChartData> barChartData = [];
+
   @override
   void initState() {
     // TODO: implement initState
@@ -57,13 +60,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         });
       }
     });
-    TaskController.getTotalTodaysPendingTask().then((value) {
-      if (value != null) {
-        setState(() {
-          todaysTotalPendingTasks = value;
-        });
-      }
-    });
     TaskController.getTotalTodaysCompletedTask().then((value) {
       if (value != null) {
         setState(() {
@@ -71,6 +67,28 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         });
       }
     });
+    TaskController.getTodaysTotalFocusTime().then((value) {
+      if (value != null) {
+        setState(() {
+          todaysTotalFocusTime = value;
+        });
+      }
+    });
+  }
+
+  void send() async {
+    final Email email = Email(
+      body: 'Total Focus Time: $todaysTotalFocusTime min\nTotal Pending Task: $totalPendingTasks\nTotal Completed Task: $totalCompletedTasks',
+      subject: 'Today\'s Report',
+    );
+    String platformResponse;
+    try {
+      await FlutterEmailSender.send(email);
+      platformResponse = 'success';
+    } catch (error) {
+      platformResponse = error.toString();
+    }
+    print(platformResponse);
   }
 
   @override
@@ -209,9 +227,30 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                         ],
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text('Below is Your Daily Stats'),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 8.0, horizontal: 10),
+                          child: Text('Below is Your Daily Stats'),
+                        ),
+                        FlatButton(
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.mail_outline,
+                                color: Colors.grey,
+                              ),
+                              SizedBox(width: 3),
+                              Text('Report')
+                            ],
+                          ),
+                          onPressed: () {
+                            send();
+                          },
+                        ),
+                      ],
                     ),
                     Container(
                       height: 85,
@@ -229,11 +268,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                             child: LinearProgressIndicator(
                               minHeight: 20,
                               value: todaysTotalCompletedTasks == 0 &&
-                                      todaysTotalPendingTasks == 0
+                                      totalPendingTasks == 0
                                   ? 0
                                   : todaysTotalCompletedTasks /
                                       (todaysTotalCompletedTasks +
-                                          todaysTotalPendingTasks),
+                                          totalPendingTasks),
                               backgroundColor: Colors.grey[400],
                               valueColor:
                                   AlwaysStoppedAnimation<Color>(Colors.green),
@@ -244,7 +283,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 Text(
-                                  '$todaysTotalCompletedTasks/${todaysTotalCompletedTasks + todaysTotalPendingTasks} Tasks Completed',
+                                  '$todaysTotalCompletedTasks/${todaysTotalCompletedTasks + totalPendingTasks} Tasks Completed',
                                   style: TextStyle(
                                       color: Colors.blueGrey,
                                       fontWeight: FontWeight.bold),
@@ -314,6 +353,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                                     ),
                                   ),
                                 ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              'Today\'s Total Focus time(in min): $todaysTotalFocusTime',
+                              style: TextStyle(
+                                color: Colors.blueGrey,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          )
                         ],
                       ),
                     ),

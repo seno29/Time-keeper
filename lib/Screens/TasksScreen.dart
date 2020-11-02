@@ -33,7 +33,7 @@ class _TasksScreenState extends State<TasksScreen> {
   }
 
   void refreshTaskList() {
-    TaskController.getPendingTask().then((value) {
+    TaskController.sortPendingTaskByPriority().then((value) {
       setState(() {
         pendingTasksList = value;
       });
@@ -72,6 +72,55 @@ class _TasksScreenState extends State<TasksScreen> {
             title: 'Tasks',
             leading: Icon(Icons.assignment),
           ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 15.0),
+                child: Text(
+                  'Pending Tasks',
+                  style: TextStyle(
+                      color: Theme.of(context).primaryColorDark, fontSize: 18),
+                ),
+              ),
+              FlatButton(
+                onPressed: () {
+                  print('Sort pressed!');
+                  TaskController.getPendingTask().then((value) {
+                    setState(() {
+                      if (value != null) {
+                        pendingTasksList = value;
+                      }
+                    });
+                  });
+                },
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.sort,
+                      color: Colors.grey,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: Text(
+                        'Sort by date',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    )
+                  ],
+                ),
+              )
+            ],
+          ),
+          pendingTasksList.length == 0
+              ? Container(
+                  padding: EdgeInsets.only(top: 20),
+                  width: double.infinity,
+                  child: Text('No Pending Tasks for now, You are all clear!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey)),
+                )
+              : Container(),
           Expanded(
             flex: 9,
             child: ScrollConfiguration(
@@ -79,15 +128,6 @@ class _TasksScreenState extends State<TasksScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(8),
                 children: <Widget>[
-                  Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Text(
-                      'Pending Tasks',
-                      style: TextStyle(
-                          color: Theme.of(context).primaryColorDark,
-                          fontSize: 18),
-                    ),
-                  ),
                   ...List.generate(
                       pendingTasksList.length,
                       (index) => TaskCard(
