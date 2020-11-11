@@ -319,7 +319,7 @@ class _TimerScreenState extends State<TimerScreen> with WidgetsBindingObserver {
                               min = end * 5;
                             }
                             duration = min;
-                            min = 1;
+                            // min = 1;
                           });
                         }
                       },
